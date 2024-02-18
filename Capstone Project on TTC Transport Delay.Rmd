@@ -27,3 +27,58 @@ plot(pressure)
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+setwd("/Users/dariansajanbhakta/Documents/GitHub/Capstone-Project_TTC")
+```
+
+
+```{r}
+# Load the readxl package
+library(readxl)
+
+# Read the Excel file
+data2 <- read_excel("ttc-bus-delay-data-2021-23.xlsx")
+
+# View the data (optional)
+head(data2)
+```
+
+
+```{r}
+str(data2)
+```
+
+
+```{r}
+summary(data2)
+```
+
+
+```{r}
+#Assigning Correct Data Type
+data2$Day <- as.factor(data2$Day)
+data2$Incident <- as.factor(data2$Incident)
+data2$Direction <- as.factor(data2$Direction)
+str(data2)
+```
+
+```{r}
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
