@@ -653,6 +653,10 @@ incident_balance <- data2_filled_updated2 %>%
 print(incident_balance)
 
 ```
+```{r}
+str(data2_filled_updated2)
+```
 
 ```{r}
+summary(lm (Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2 ))
 ```
