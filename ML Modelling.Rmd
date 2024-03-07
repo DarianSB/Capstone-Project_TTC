@@ -30,15 +30,35 @@ colnames(Preprocessed_dataset) <- c("Delay_Severity", "Route", "Day", "Incident"
 str(Preprocessed_dataset)
 ```
 ```{r}
-
-
+install.packages("shiny")
 ```
 
-
 ```{r}
+library(shiny)
 
-```
-```{r}
+# Assuming 'Preprocessed_dataset' is your preprocessed dataset
+# Replace 'Preprocessed_dataset' with the name of your dataset
+dataset <- Preprocessed_dataset
+
+# UI for downloading the dataset
+ui <- fluidPage(
+  downloadButton("downloadData", "Download Preprocessed Dataset")
+)
+
+# Server function
+server <- function(input, output) {
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      "preprocessed_dataset.csv"  # Change the filename as needed
+    },
+    content = function(file) {
+      write.csv(dataset, file, row.names = FALSE)
+    }
+  )
+}
+
+# Run the Shiny application
+shinyApp(ui, server)
 
 
 ```
@@ -479,19 +499,102 @@ print(accuracies)
 ```
 
 
+#RELOAD OVERSAMPLED BALANCED DATASET
 ```{r}
+# Load the TTC Delay data readxl package:
+library(readxl)
+
+# Read the Excel file
+Oversampled_Dataset <- read_excel("TTC_preprocessed_dataset.xlsx")
+
+# View the data (optional)
+head(Oversampled_Dataset)
 ```
 
 
+```{r}
+set.seed(123) # Set a random seed for reproducibility
+
+# Create indices for the training set
+trainIndex1 <- createDataPartition(Oversampled_Dataset$Delay_Severity, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+
+# Split the data into training and testing sets
+train1 <- Preprocessed_dataset[trainIndex1, ]
+test1 <- Preprocessed_dataset[-trainIndex1, ]
+```
 
 
 ```{r}
+library(caret)
 
+# Create 10-fold cross-validation folds
+folds1 <- createFolds(train1$Delay_Severity, k = 10)
+
+# Initialize an empty vector to store accuracies
+accuracies1 <- numeric(length(folds1))
+
+# Perform 10-fold cross-validation
+for (i in 1:length(folds1)) {
+  # Extract training and test data for current fold
+  training_fold1 <- train1[-folds1[[i]], ]
+  test_fold1 <- train1[folds1[[i]], ]
+  
+  # Train the Random Forest model
+  rf_model1 <- randomForest(Delay_Severity ~ ., data = training_fold1, ntree = 100)
+  
+  # Predict on the test set
+  predictions1 <- predict(rf_model1, newdata = test_fold1)
+  
+  # Generate the confusion matrix
+  conf_matrix1 <- confusionMatrix(predictions1, test_fold1$Delay_Severity)
+  
+  # Calculate accuracy and store it
+  accuracies1[i] <- conf_matrix1$overall['Accuracy']
+}
+
+# Print accuracies of each fold
+print(accuracies1)
 
 ```
 
 
 ```{r}
+# Install and load missForest package
+install.packages("missForest")
+library(missForest)
+
+# Impute missing values using missForest
+imputed_data <- missForest(train1)
+
+# Create 10-fold cross-validation folds
+folds1 <- createFolds(imputed_data$Delay_Severity, k = 10)
+
+# Initialize an empty vector to store accuracies
+accuracies1 <- numeric(length(folds1))
+
+# Perform 10-fold cross-validation
+for (i in 1:length(folds1)) {
+  # Extract training and test data for current fold
+  training_fold1 <- imputed_data[-folds1[[i]], ]
+  test_fold1 <- imputed_data[folds1[[i]], ]
+  
+  # Train the Random Forest model
+  rf_model1 <- randomForest(Delay_Severity ~ ., data = training_fold1, ntree = 100)
+  
+  # Predict on the test set
+  predictions1 <- predict(rf_model1, newdata = test_fold1)
+  
+  # Generate the confusion matrix
+  conf_matrix1 <- confusionMatrix(predictions1, test_fold1$Delay_Severity)
+  
+  # Calculate accuracy and store it
+  accuracies1[i] <- conf_matrix1$overall['Accuracy']
+}
+
+# Print accuracies of each fold
+print(accuracies1)
 
 ```
 

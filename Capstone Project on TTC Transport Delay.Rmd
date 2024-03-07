@@ -14,26 +14,10 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#INITIAL ANALYSIS OF TTC DELAY DATASET:
 
 ```{r}
-setwd("/Users/dariansajanbhakta/Documents/GitHub/Capstone-Project_TTC")
-```
-
-```{r}
-# Load the readxl package
+# Load the TTC Delay data readxl package:
 library(readxl)
 
 # Read the Excel file
@@ -101,7 +85,7 @@ ggplot(data2_filled, aes(x = Incident, y = `Min Delay`)) +
 ```
 
 ```{r}
-# Perform 'Winsorization' to Fix Outlier Issues: capping the outliers at a certain percentile. For example, all data points above the 95th percentile and below the 5th percentile
+# Perform 'Winsorization' to Fix Outlier Issues: capping the outliers at a certain percentile. For example, all data points above the 94th percentile and below the 2th percentile
 library(DescTools)
 
 # Winsorize the 'Min Delay' column at the 5th and 95th percentiles for the entire data
@@ -289,9 +273,6 @@ ggplot(incident_counts, aes(x = fct_reorder(Incident, n), y = n, fill = Incident
   scale_fill_manual(values = rainbow(length(incident_counts$Incident)))  # Use multicolor
 ```
 
-```{r}
-
-```
 
 ```{r}
 data2_filled_updated2$Time_Period <- as.factor(data2_filled_updated2$Time_Period)
@@ -299,10 +280,6 @@ data2_filled_updated2$Time_Period <- as.factor(data2_filled_updated2$Time_Period
 
 ```{r}
 str(data2_filled_updated2)
-```
-
-```{r}
-
 ```
 
 ```{r}
@@ -441,12 +418,7 @@ ggplot(data_by_incident, aes(x = Incident, y = Avg_Min_Delay)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
 ```
-```{r}
 
-```
-```{r}
-
-```
 
 ```{r}
 # Assuming your tibble is named "data_tibble"
@@ -628,9 +600,6 @@ ggplot(top_routes, aes(x = reorder(Route, Avg_Min_Delay), y = Avg_Min_Delay)) +
   theme_minimal()
 ```
 
-```{r}
-
-```
 
 ```{r}
 # Load necessary libraries
