@@ -184,9 +184,11 @@ data2_filled_updated1$Time_Period <- as.factor(data2_filled_updated1$Time_Period
 
 data2_filled_updated1 <- data2_filled_updated %>%
   mutate(Delay_Severity = case_when(
-    `Min_Delay_Winsorized` >= 0 & `Min_Delay_Winsorized` < 10 ~ "Borderline Late",
-    `Min_Delay_Winsorized` >= 10 & `Min_Delay_Winsorized` <= 15 ~ "Considerably Late",
-    `Min_Delay_Winsorized` > 15 ~ "Extremely Late",
+    `Min_Delay_Winsorized` >= 0 & `Min_Delay_Winsorized` < 5 ~ "<5 Min",
+    `Min_Delay_Winsorized` >= 5 & `Min_Delay_Winsorized` <= 10 ~ "5-10 Min",
+    `Min_Delay_Winsorized` >10 & `Min_Delay_Winsorized` <= 15 ~ "11-15 Min",
+    `Min_Delay_Winsorized` >15 & `Min_Delay_Winsorized` <= 20 ~ "16-20 Min",
+    `Min_Delay_Winsorized` > 20 ~ ">20 Min",
     TRUE ~ "On Time"  # Handle cases where Min Delay is negative or other values
   ))
 data2_filled_updated1$Delay_Severity <- as.factor(data2_filled_updated1$Delay_Severity)
@@ -209,23 +211,55 @@ Delay_Severity_balance <- data2_filled_updated1 %>%
 # Print the counts and percentages to check for imbalance
 print(Delay_Severity_balance)
 ```
+```{r}
+#GROUPING 'MIN DELAY' DATA FOR FUTURE ANALYSIS
+
+data2_filled_updated1 <- data2_filled_updated %>%
+  mutate(Delay_Severity = case_when(
+    `Min_Delay_Winsorized` >= 0 & `Min_Delay_Winsorized` < 10 ~ "Borderline Late (<10 Min)",
+    `Min_Delay_Winsorized` >=10 & `Min_Delay_Winsorized` <= 15 ~ "Considerably Late (11-15 Min)",
+    `Min_Delay_Winsorized` > 15 ~ "Extremely Late (>15 Min)",
+    TRUE ~ "On Time"  # Handle cases where Min Delay is negative or other values
+  ))
+data2_filled_updated1$Delay_Severity <- as.factor(data2_filled_updated1$Delay_Severity)
+
+# Create a customized boxplot to clearly see the interquartile range
+ggplot(data2_filled_updated1, aes(x = Delay_Severity, y = `Min_Delay_Winsorized`)) +
+  geom_boxplot(coef = 1.5) +  # Adjust the coef parameter to control the length of the whiskers
+  labs(x = "Delay_Severity", y = "Min Delay", title = "Boxplot of Min Delay by Delay_Severity")
+```
+
+
+```{r}
+# CHECK FOR DATA IMBALANCE
+library(dplyr)
+
+# Count the frequency of each level in the 'Incident' column and calculate percentage
+Delay_Severity_balance1 <- data2_filled_updated1 %>%
+  count(Delay_Severity) %>%
+  mutate(Percentage = n / sum(n) * 100) %>%
+  arrange(desc(n))
+
+# Print the counts and percentages to check for imbalance
+print(Delay_Severity_balance1)
+```
 
 ```{r}
 # Reducing Incident Row labels from 12 to 5 
 data2_filled_updated2 <- data2_filled_updated1 %>%
   mutate(Incident = recode(Incident,
-                            "Cleaning" = "General Delay n' Emergencies",
-                            "Collision" = "General Delay n' Emergencies",
-                            "Diversion" = "General Delay n' Emergencies",
-                            "Emergency Services" = "General Delay n' Emergencies",
-                            "General Delay" = "General Delay n' Emergencies",
-                            "Investigation" = "General Delay n' Emergencies",
-                            "Management" = "General Delay n' Emergencies",
+                            "Cleaning" = "General Delay n' Weather",
+                            "Collision" = "Accidents n' Emergencies",
+                            "Diversion" = "General Delay n' Weather",
+                            "Emergency Services" = "Accidents n' Emergencies",
+                            "General Delay" = "General Delay n' Weather",
+                            "Investigation" = "Accidents n' Emergencies",
+                            "Management" = "General Delay n' Weather",
                             "Mechanical" = "Mechanical issue",
                             "Operations" = "Maintenance Operations",
-                            "Overhead" = "General Delay n' Emergencies",
-                            "Security" = "General Delay n' Emergencies",
-                            "Vision" = "General Delay n' Emergencies"
+                            "Overhead" = "General Delay n' Weather",
+                            "Security" = "Accidents n' Emergencies",
+                            "Vision" = "General Delay n' Weather"
                             ))
 ```
 ```{r}
@@ -677,7 +711,7 @@ summary(data2_filled_updated2$Min_Gap_Winsorized)
 
 ```{r}
 Cleaned_Data<-data2_filled_updated2
-Cleaned_Data$Time_Period<- as.factor(Cleaned_Data$Time_Period)
+Cleaned_Data$Time_Period<- as.integer(Cleaned_Data$Time_Period)
 Cleaned_Data$Incident<- as.numeric(Cleaned_Data$Incident)
 Cleaned_Data$Day<- as.numeric(Cleaned_Data$Day)
 str(Cleaned_Data)
@@ -701,7 +735,7 @@ normalize<-function(x){return((x-min(x))/(max(x)-min(x)))}
 
 
 ```{r}
-normalized<-as.data.frame(lapply(Cleaned_Data[c(3,5,7,10,11)],normalize))
+normalized<-as.data.frame(lapply(Cleaned_Data[c(3,5,7,10,11,13)],normalize))
 ```
 
 
@@ -712,10 +746,6 @@ str(Preprocessed_dataset)
 
 
 ```{r}
-#Forward Selection
-full<-lm(data2_filled_updated2$Incident~.,data=Preprocessed_dataset)
-null<-lm(data2_filled_updated2$Incident~1,data=Preprocessed_dataset)
-stepF<-stepAIC(null,scope=list(lower=null,upper=full),direction="forward",trace=TRUE)
-summary(stepF)
+
 ```
 

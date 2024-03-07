@@ -435,6 +435,47 @@ cv <- lapply(folds, function(x) {
 
 
 ```{r}
+library(caret)
+library(e1071)  # For SVM implementation
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create 10-fold cross-validation folds
+folds <- createFolds(Preprocessed_dataset$Delay_Severity, k = 10)
+
+# Initialize an empty vector to store accuracies
+accuracies <- numeric(length(folds))
+
+# Perform 10-fold cross-validation
+for (i in seq_along(folds)) {
+  # Extract training and test data for current fold
+  train_fold <- Preprocessed_dataset[-folds[[i]], ]
+  test_fold <- Preprocessed_dataset[folds[[i]], ]
+  
+  # Train the SVM model
+  svm_model <- svm(Delay_Severity ~ ., 
+                   data = train_fold, 
+                   kernel = "radial",  # Radial basis function kernel
+                   gamma = 0.1,        # Kernel coefficient for radial kernel
+                   cost = 1)           # Cost parameter
+  
+  # Predict on the test set
+  predictions <- predict(svm_model, newdata = test_fold)
+  
+  # Calculate accuracy
+  accuracy <- mean(predictions == test_fold$Delay_Severity)
+  
+  # Store accuracy of the current fold
+  accuracies[i] <- accuracy
+  
+  # Print accuracy of the current fold
+  cat("Accuracy of Fold", i, ":", accuracy, "\n")
+}
+
+# Print accuracies of each fold
+print(accuracies)
+
 ```
 
 
