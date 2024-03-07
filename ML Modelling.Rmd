@@ -1,0 +1,462 @@
+---
+title: "Data Modelling_Capstone Project"
+output: html_document
+date: "2024-03-06"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+str(Preprocessed_dataset)
+```
+```{r}
+ # It's important to adjust column names appropriately
+colnames(Preprocessed_dataset) <- c("Delay_Severity", "Route", "Day", "Incident", "Direction","Vehicle","Time_Period")
+```
+```{r}
+str(Preprocessed_dataset)
+```
+```{r}
+
+
+```
+
+
+```{r}
+
+```
+```{r}
+
+
+```
+
+
+```{r}
+install.packages("randomForest")
+library(randomForest)
+library(caret)
+library(class)
+```
+```{r}
+set.seed(123) # Set a random seed for reproducibility
+
+# Create indices for the training set
+trainIndex <- createDataPartition(Preprocessed_dataset$Delay_Severity, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+
+# Split the data into training and testing sets
+train <- Preprocessed_dataset[trainIndex, ]
+test <- Preprocessed_dataset[-trainIndex, ]
+
+```
+
+```{r}
+# Train the Random Forest model
+rf_model <- randomForest(Delay_Severity ~ ., data = train, ntree = 100)
+
+# Print the model summary
+print(rf_model)
+# Predict on the test set
+predictions <- predict(rf_model, newdata = test)
+
+# Assuming caret package is installed for confusionMatrix
+library(caret)
+
+# Generate the confusion matrix
+conf_matrix <- confusionMatrix(predictions, test$Delay_Severity)
+
+# Print the confusion matrix
+print(conf_matrix)
+```
+
+
+```{r}
+library(caret)
+
+# Create 10-fold cross-validation folds
+folds <- createFolds(train$Delay_Severity, k = 10)
+
+# Initialize an empty vector to store accuracies
+accuracies <- numeric(length(folds))
+
+# Perform 10-fold cross-validation
+for (i in 1:length(folds)) {
+  # Extract training and test data for current fold
+  training_fold <- train[-folds[[i]], ]
+  test_fold <- train[folds[[i]], ]
+  
+  # Train the Random Forest model
+  rf_model <- randomForest(Delay_Severity ~ ., data = training_fold, ntree = 100)
+  
+  # Predict on the test set
+  predictions <- predict(rf_model, newdata = test_fold)
+  
+  # Generate the confusion matrix
+  conf_matrix <- confusionMatrix(predictions, test_fold$Delay_Severity)
+  
+  # Calculate accuracy and store it
+  accuracies[i] <- conf_matrix$overall['Accuracy']
+}
+
+# Print accuracies of each fold
+print(accuracies)
+
+```
+
+
+```{r}
+install.packages("nnet")
+library(caret)
+library(nnet)
+```
+
+
+```{r}
+# Train the multinomial logistic regression model
+multinom_model <- multinom(Delay_Severity ~ ., data = train)
+# Predict on the test set
+test$predicted_severity <- predict(multinom_model, newdata = test)
+
+# Generate the confusion matrix
+conf_matrix <- confusionMatrix(test$predicted_severity, test$Delay_Severity)
+
+# Print the confusion matrix
+print(conf_matrix)
+```
+```{r}
+library(caret)
+library(nnet) # For multinom model
+
+# Create 10-fold cross-validation folds
+folds <- createFolds(train$Delay_Severity, k = 10)
+
+# Initialize an empty vector to store accuracies
+accuracies <- numeric(length(folds))
+
+# Perform 10-fold cross-validation
+for (i in 1:length(folds)) {
+  # Extract training and test data for current fold
+  training_fold <- train[-folds[[i]], ]
+  test_fold <- train[folds[[i]], ]
+  
+  # Train the multinomial logistic regression model
+  multinom_model <- multinom(Delay_Severity ~ ., data = training_fold)
+  
+  # Predict on the test set
+  test_fold$predicted_severity <- predict(multinom_model, newdata = test_fold)
+  
+  # Generate the confusion matrix
+  conf_matrix <- confusionMatrix(test_fold$predicted_severity, test_fold$Delay_Severity)
+  
+  # Calculate accuracy and store it
+  accuracies[i] <- conf_matrix$overall['Accuracy']
+  
+  # Print accuracy of the current fold
+  cat("Accuracy of Fold", i, ":", accuracies[i], "\n")
+}
+
+# Print accuracies of each fold
+print(accuracies)
+
+```
+
+
+
+```{r}
+library(caret)
+library(class)
+# Excluding columns with NA names
+Preprocessed_dataset <- Preprocessed_dataset[, !is.na(names(Preprocessed_dataset))]
+
+# Splitting the dataset again after excluding NA named columns
+set.seed(123) # Ensuring reproducibility
+
+trainIndex <- createDataPartition(Preprocessed_dataset$Incident, p = .8, 
+                                  list = FALSE, times = 1)
+
+train <- Preprocessed_dataset[trainIndex, ]
+test <- Preprocessed_dataset[-trainIndex, ]
+
+```
+```{r}
+
+```
+
+```{r}
+
+
+# Apply KNN
+knn_pred <- knn(train = train[, -1], # Exclude the dependent variable from training data
+                test = test[, -1],   # Exclude the dependent variable from testing data
+                cl = train$Delay_Severity, # Training labels
+                k = 10)              # Number of neighbors
+
+# View the confusion matrix
+confusionMatrix <- table(Actual = test$Delay_Severity, Predicted = knn_pred)
+print(confusionMatrix)
+
+```
+```{r}
+library(caret)
+library(class)
+
+# Excluding columns with NA names
+Preprocessed_dataset <- Preprocessed_dataset[, !is.na(names(Preprocessed_dataset))]
+
+# Splitting the dataset again after excluding NA named columns
+set.seed(123) # Ensuring reproducibility
+trainIndex <- createDataPartition(Preprocessed_dataset$Incident, p = .8, 
+                                  list = FALSE, times = 1)
+
+train <- Preprocessed_dataset[trainIndex, ]
+test <- Preprocessed_dataset[-trainIndex, ]
+
+# Apply KNN
+knn_pred <- knn(train = train[, -1],     # Exclude the dependent variable from training data
+                test = test[, -1],       # Exclude the dependent variable from testing data
+                cl = train$Delay_Severity, # Training labels
+                k = 10)                  # Number of neighbors
+
+# View the confusion matrix
+confusionMatrix <- table(Actual = test$Delay_Severity, Predicted = knn_pred)
+print(confusionMatrix)
+
+```
+```{r}
+library(caret)
+library(class)
+
+# Excluding columns with NA names
+Preprocessed_dataset <- Preprocessed_dataset[, !is.na(names(Preprocessed_dataset))]
+
+# Splitting the dataset again after excluding NA named columns
+set.seed(123) # Ensuring reproducibility
+folds <- createFolds(Preprocessed_dataset$Delay_Severity, k = 10)
+
+# Initialize an empty vector to store accuracies
+accuracies <- numeric(length(folds))
+
+# Perform 10-fold cross-validation
+for (i in seq_along(folds)) {
+  # Extract training and test data for current fold
+  train_fold <- Preprocessed_dataset[-folds[[i]], ]
+  test_fold <- Preprocessed_dataset[folds[[i]], ]
+  
+  # Apply KNN
+  knn_pred <- knn(train = train_fold[, -1],  # Exclude the dependent variable from training data
+                  test = test_fold[, -1],    # Exclude the dependent variable from testing data
+                  cl = train_fold$Delay_Severity, # Training labels
+                  k = 10)                    # Number of neighbors
+  
+  # Calculate accuracy
+  accuracy <- mean(knn_pred == test_fold$Delay_Severity)
+  
+  # Store accuracy of the current fold
+  accuracies[i] <- accuracy
+  
+  # Print accuracy of the current fold
+  cat("Accuracy of Fold", i, ":", accuracy, "\n")
+}
+
+# Print accuracies of each fold
+print(accuracies)
+
+```
+
+```{r}
+install.packages("gbm")
+library(gbm)
+library(caret)
+```
+
+
+```{r}
+set.seed(123) # For reproducibility
+
+# Training the GBM model
+gbm_model <- gbm(Delay_Severity ~ ., 
+                 data = train, 
+                 distribution = "multinomial",
+                 n.trees = 100,
+                 interaction.depth = 3,
+                 shrinkage = 0.1,
+                 n.minobsinnode = 10,
+                 cv.folds = 5)
+
+# Summarize the model
+summary(gbm_model)
+```
+```{r}
+# Predicting on the test set
+predictions <- predict(gbm_model, newdata = test, n.trees = 100, type = "response")
+
+# Converting probabilities to factor levels
+max_probs <- apply(predictions, 1, which.max)
+predicted_labels <- factor(max_probs, labels = levels(train$Delay_Severity))
+
+```
+
+
+```{r}
+# Generate the confusion matrix
+conf_matrix <- confusionMatrix(predicted_labels, test$Delay_Severity)
+
+# Print the confusion matrix and statistics
+print(conf_matrix)
+
+```
+```{r}
+library(caret)
+library(gbm)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Create 10-fold cross-validation folds
+folds <- createFolds(Preprocessed_dataset$Delay_Severity, k = 10)
+
+# Initialize an empty vector to store accuracies
+accuracies <- numeric(length(folds))
+
+# Perform 10-fold cross-validation
+for (i in seq_along(folds)) {
+  # Extract training and test data for current fold
+  train_fold <- Preprocessed_dataset[-folds[[i]], ]
+  test_fold <- Preprocessed_dataset[folds[[i]], ]
+  
+  # Train the GBM model
+  gbm_model <- gbm(Delay_Severity ~ ., 
+                   data = train_fold, 
+                   distribution = "multinomial",
+                   n.trees = 100,
+                   interaction.depth = 3,
+                   shrinkage = 0.1,
+                   n.minobsinnode = 10)
+  
+  # Predict on the test set
+  predictions <- predict(gbm_model, newdata = test_fold, n.trees = 100, type = "response")
+  
+  # Convert probabilities to factor levels
+  max_probs <- apply(predictions, 1, which.max)
+  predicted_labels <- factor(max_probs, labels = levels(train_fold$Delay_Severity))
+  
+  # Calculate accuracy
+  accuracy <- mean(predicted_labels == test_fold$Delay_Severity)
+  
+  # Store accuracy of the current fold
+  accuracies[i] <- accuracy
+  
+  # Print accuracy of the current fold
+  cat("Accuracy of Fold", i, ":", accuracy, "\n")
+}
+
+# Print accuracies of each fold
+print(accuracies)
+
+```
+
+#Cross-Validation
+```{r}
+install.packages("DMwR2")
+```
+
+
+```{r message=TRUE}
+# Apply SMOTE to balance the training data
+train_balanced <- SMOTE(X=train[, -1], target=train$Delay_Severity, K = 5, dup_size = 102)
+```
+
+```{r}
+install.packages("smotefamily")
+```
+
+
+```{r}
+library(caret)
+folds<-createFolds(train$Delay_Severity,k=10)
+cv=lapply(folds,function(x){
+  training_fold=train[-x, ]
+  test_fold=train[x, ]
+  # Train the Random Forest model
+  rf_model <- randomForest(Delay_Severity ~ ., data = training_fold, ntree = 300)
+
+# Print the model summary
+  print(rf_model)
+# Predict on the test set
+  predictions <- predict(rf_model, newdata = test_fold)
+
+# Generate the confusion matrix
+  conf_matrix <- confusionMatrix(predictions, test_fold$Delay_Severity)
+  accuracy <- (conf_matrix[[1, 1]] + conf_matrix[[2, 2]] + conf_matrix[[3, 3]]) /
+            sum(conf_matrix)
+  return(accuracy)
+  })
+
+```
+
+
+```{r}
+library(caret)
+
+folds <- createFolds(train$Delay_Severity, k = 10)
+cv <- lapply(folds, function(x) {
+  training_fold <- train[-x, ]
+  test_fold <- train[x, ]
+
+  # Train the Random Forest model
+  rf_model <- randomForest(Delay_Severity ~ ., data = training_fold, ntree = 300)
+
+  # Predict on the test set
+  predictions <- predict(rf_model, newdata = test_fold)
+
+  # Generate the confusion matrix
+  conf_matrix <- confusionMatrix(predictions, test_fold$Delay_Severity)
+
+  # Calculate accuracy
+  accuracy <- confusionMatrix(predictions, test_fold$Delay_Severity)$overall['Accuracy']
+  return(accuracy)
+})
+
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+
+
+```{r}
+
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+str(Preprocessed_dataset)
+
+```
+

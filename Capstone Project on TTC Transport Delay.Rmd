@@ -87,6 +87,12 @@ print(missing_values)
 ```
 
 ```{r}
+# Install ggplot2 package if it's not already installed
+install.packages("ggplot2")
+
+# Load the ggplot2 package
+library(ggplot2)
+
 # OUTLIER ANALYSIS: Create a customized boxplot to clearly see the interquartile range
 ggplot(data2_filled, aes(x = Incident, y = `Min Delay`)) +
   geom_boxplot(coef = 1.5) +  # Adjust the coef parameter to control the length of the whiskers
@@ -99,13 +105,14 @@ ggplot(data2_filled, aes(x = Incident, y = `Min Delay`)) +
 library(DescTools)
 
 # Winsorize the 'Min Delay' column at the 5th and 95th percentiles for the entire data
-data2_filled$Min_Delay_Winsorized <- Winsorize(data2_filled$`Min Delay`, probs = c(0.02, 0.98))
+data2_filled$Min_Delay_Winsorized <- Winsorize(data2_filled$`Min Delay`, probs = c(0.02, 0.94))
 
 # Check the results
 summary(data2_filled$Min_Delay_Winsorized)
 ```
 
 ```{r}
+library(ggplot2)
 # OUTLIER ANALYSIS: Create a customized boxplot to clearly see the interquartile range
 ggplot(data2_filled, aes(x = Incident, y = `Min_Delay_Winsorized`)) +
   geom_boxplot(coef = 1.5) +  # Adjust the coef parameter to control the length of the whiskers
@@ -177,11 +184,9 @@ data2_filled_updated1$Time_Period <- as.factor(data2_filled_updated1$Time_Period
 
 data2_filled_updated1 <- data2_filled_updated %>%
   mutate(Delay_Severity = case_when(
-    `Min_Delay_Winsorized` >= 0 & `Min_Delay_Winsorized` <= 5 ~ "Borderline Late",
-    `Min_Delay_Winsorized` >= 6 & `Min_Delay_Winsorized` <= 10 ~ "Slightly Late",
-    `Min_Delay_Winsorized` >= 11 & `Min_Delay_Winsorized` <= 20 ~ "Considerably Late",
-    `Min_Delay_Winsorized` >= 21 & `Min_Delay_Winsorized` <= 30 ~ "Very Late",
-    `Min_Delay_Winsorized` > 30 ~ "Extremely Late",
+    `Min_Delay_Winsorized` >= 0 & `Min_Delay_Winsorized` < 10 ~ "Borderline Late",
+    `Min_Delay_Winsorized` >= 10 & `Min_Delay_Winsorized` <= 15 ~ "Considerably Late",
+    `Min_Delay_Winsorized` > 15 ~ "Extremely Late",
     TRUE ~ "On Time"  # Handle cases where Min Delay is negative or other values
   ))
 data2_filled_updated1$Delay_Severity <- as.factor(data2_filled_updated1$Delay_Severity)
@@ -191,24 +196,43 @@ ggplot(data2_filled_updated1, aes(x = Delay_Severity, y = `Min_Delay_Winsorized`
   geom_boxplot(coef = 1.5) +  # Adjust the coef parameter to control the length of the whiskers
   labs(x = "Delay_Severity", y = "Min Delay", title = "Boxplot of Min Delay by Delay_Severity")
 ```
+```{r}
+# CHECK FOR DATA IMBALANCE
+library(dplyr)
+
+# Count the frequency of each level in the 'Incident' column and calculate percentage
+Delay_Severity_balance <- data2_filled_updated1 %>%
+  count(Delay_Severity) %>%
+  mutate(Percentage = n / sum(n) * 100) %>%
+  arrange(desc(n))
+
+# Print the counts and percentages to check for imbalance
+print(Delay_Severity_balance)
+```
 
 ```{r}
 # Reducing Incident Row labels from 12 to 5 
 data2_filled_updated2 <- data2_filled_updated1 %>%
   mutate(Incident = recode(Incident,
-                            "Cleaning" = "Weather n' General Delay",
-                            "Collision" = "Road Collision n' Emergencies",
-                            "Diversion" = "Road Collision n' Emergencies",
-                            "Emergency Services" = "Security Intervention",
-                            "General Delay" = "Weather n' General Delay",
-                            "Investigation" = "Security Intervention",
-                            "Management" = "Weather n' General Delay",
+                            "Cleaning" = "General Delay n' Emergencies",
+                            "Collision" = "General Delay n' Emergencies",
+                            "Diversion" = "General Delay n' Emergencies",
+                            "Emergency Services" = "General Delay n' Emergencies",
+                            "General Delay" = "General Delay n' Emergencies",
+                            "Investigation" = "General Delay n' Emergencies",
+                            "Management" = "General Delay n' Emergencies",
                             "Mechanical" = "Mechanical issue",
-                            "Operations" = "Maintenance n' Operations",
-                            "Overhead" = "Weather n' General Delay",
-                            "Security" = "Security Intervention",
-                            "Vision" = "Weather n' General Delay"
+                            "Operations" = "Maintenance Operations",
+                            "Overhead" = "General Delay n' Emergencies",
+                            "Security" = "General Delay n' Emergencies",
+                            "Vision" = "General Delay n' Emergencies"
                             ))
+```
+```{r}
+# Create a customized boxplot to clearly see the interquartile range
+ggplot(data2_filled_updated2, aes(x = Incident, y = `Min_Delay_Winsorized`)) +
+  geom_boxplot(coef = 1.5) +  # Adjust the coef parameter to control the length of the whiskers
+  labs(x = "Incident", y = "Min Delay", title = "Boxplot of Min Delay by Incident")
 ```
 
 ```{r}
@@ -232,21 +256,7 @@ ggplot(incident_counts, aes(x = fct_reorder(Incident, n), y = n, fill = Incident
 ```
 
 ```{r}
-# Perform k-means clustering
-set.seed(123)  # Set seed for reproducibility
-k <- 5  # Number of clusters
-kmeans_result <- kmeans(data2_filled_updated2$`Min_Delay_Winsorized`, centers = k)
 
-# Add cluster labels to the original data
-data2_filled_updated2$cluster <- as.factor(kmeans_result$cluster)
-
-# Visualize the clusters
-library(ggplot2)
-ggplot(data2_filled_updated2, aes(x = Incident, y = `Min_Delay_Winsorized`, color = cluster)) +
-  geom_point(position = position_jitter(width = 0.3), size = 2) +
-  labs(x = "Incident", y = "Min Delay", title = "Clustering of Incidents based on Min Delay") +
-  scale_color_discrete(name = "Cluster") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
 ```
 
 ```{r}
@@ -258,8 +268,7 @@ str(data2_filled_updated2)
 ```
 
 ```{r}
-subset_data2_filled_updated2<-data2_filled_updated2[,c("Day","Delay_Severity")]
-plot(subset_data2_filled_updated2)
+
 ```
 
 ```{r}
@@ -399,8 +408,7 @@ ggplot(data_by_incident, aes(x = Incident, y = Avg_Min_Delay)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
 ```
 ```{r}
-subset_data2_filled_updated2<-data2_filled_updated2[,c("Incident","Delay_Severity")]
-plot(subset_data2_filled_updated2)
+
 ```
 ```{r}
 
@@ -587,28 +595,7 @@ ggplot(top_routes, aes(x = reorder(Route, Avg_Min_Delay), y = Avg_Min_Delay)) +
 ```
 
 ```{r}
-# Aggregate data by route and calculate the mean Min Delay for each route
-data_by_location <- data2_filled_updated2 %>%
-  group_by(Location) %>%
-  summarise(Avg_Min_Delay = mean(`Min_Delay_Winsorized`))
 
-# Reorder levels of Route according to Avg_Min_Delay in descending order
-data_by_location <- data_by_location %>%
-  arrange(desc(Avg_Min_Delay)) %>%
-  mutate(Location = factor(Location, levels = Location))
-
-# Select the top 25 routes with the highest average minimum delay
-top_location <- head(data_by_location, 20)
-
-# Create bar plot for the top 20 routes
-ggplot(top_location, aes(x = reorder(Location, Avg_Min_Delay), y = Avg_Min_Delay)) +
-  geom_bar(stat = "identity", fill = ifelse(rank(-top_location$Avg_Min_Delay) %% 2 == 0, "lightblue", "lightgreen")) +  # Alternating bar colors
-  geom_text(aes(label = round(Avg_Min_Delay, 2)), position = position_dodge(width = 0.9), vjust = -0.5, color = "black", size = 3) +  # Add data label above bars
-  coord_flip() +  # Flip coordinates for horizontal bar chart
-  labs(title = "Top 20 Location with Highest Average Min Delay",
-       x = "Location",
-       y = "Average Min Delay") +
-  theme_minimal()
 ```
 
 ```{r}
@@ -651,8 +638,24 @@ incident_balance <- data2_filled_updated2 %>%
 
 # Print the counts and percentages to check for imbalance
 print(incident_balance)
-
 ```
+
+
+```{r}
+# CHECK FOR DATA IMBALANCE
+library(dplyr)
+
+# Count the frequency of each level in the 'Incident' column and calculate percentage
+Delay_Severity_balance <- data2_filled_updated2 %>%
+  count(Delay_Severity) %>%
+  mutate(Percentage = n / sum(n) * 100) %>%
+  arrange(desc(n))
+
+# Print the counts and percentages to check for imbalance
+print(Delay_Severity_balance)
+```
+
+
 ```{r}
 str(data2_filled_updated2)
 ```
@@ -660,3 +663,59 @@ str(data2_filled_updated2)
 ```{r}
 summary(lm (Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2 ))
 ```
+```{r}
+# Perform 'Winsorization' to Fix Outlier Issues: capping the outliers at a certain percentile. For example, all data points above the 95th percentile and below the 5th percentile
+library(DescTools)
+
+# Winsorize the 'Min Delay' column at the 5th and 95th percentiles for the entire data
+data2_filled_updated2$Min_Gap_Winsorized <- Winsorize(data2_filled_updated2$`Min Gap`, probs = c(0.02, 0.95))
+
+# Check the results
+summary(data2_filled_updated2$Min_Gap_Winsorized)
+```
+
+
+```{r}
+Cleaned_Data<-data2_filled_updated2
+Cleaned_Data$Time_Period<- as.factor(Cleaned_Data$Time_Period)
+Cleaned_Data$Incident<- as.numeric(Cleaned_Data$Incident)
+Cleaned_Data$Day<- as.numeric(Cleaned_Data$Day)
+str(Cleaned_Data)
+```
+
+
+```{r}
+install.packages("class")
+install.packages("gmodels")
+library(class)
+library(gmodels)
+```
+
+
+```{r}
+round(prop.table(table(Cleaned_Data$Incident))*100,digits = 1)
+```
+```{r}
+normalize<-function(x){return((x-min(x))/(max(x)-min(x)))}
+```
+
+
+```{r}
+normalized<-as.data.frame(lapply(Cleaned_Data[c(3,5,7,10,11)],normalize))
+```
+
+
+```{r}
+Preprocessed_dataset<-cbind(Cleaned_Data$Delay_Severity,normalized)
+str(Preprocessed_dataset)
+```
+
+
+```{r}
+#Forward Selection
+full<-lm(data2_filled_updated2$Incident~.,data=Preprocessed_dataset)
+null<-lm(data2_filled_updated2$Incident~1,data=Preprocessed_dataset)
+stepF<-stepAIC(null,scope=list(lower=null,upper=full),direction="forward",trace=TRUE)
+summary(stepF)
+```
+
