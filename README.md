@@ -5,10 +5,13 @@ The efficacy and reliability of public transit systems are pivotal to the socioe
 
 **1.2 RESEARCH QUESTIONS:**
 The scope of this project will revolve around three core research questions. 
+
   **1.	What are the primary causes of delays in TTC transportation operations, and how do they vary by time of day, day of the week,            and season?**
      -	This question aims to identify and quantify the main factors that contribute to transit delays, potentially leading to targeted          strategies to reduce them.
+     
   **2.	Can historical delay data be used to predict future delays, and what models provide the best accuracy and reliability for such           predictions?**
      -	This question focuses on predictive analytics, leveraging past data to forecast future occurrences and the effectiveness of              different predictive models. 
+     
   **3.	What mitigation strategies can be developed from the delay data analysis to improve the reliability of TTC services, and how can         these strategies be implemented effectively?**
      -	Lastly, we concentrate on formulating effective mitigation strategies based on our data analysis to enhance the reliability of           TTC services.
 
