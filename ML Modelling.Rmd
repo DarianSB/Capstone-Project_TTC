@@ -1,6 +1,8 @@
 ---
-title: "Data Modelling_Capstone Project"
-output: html_document
+title: "Predictive Modeling_Capstone Project"
+output:
+  pdf_document: default
+  html_document: default
 date: "2024-03-06"
 ---
 
@@ -15,66 +17,39 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
 
-
-
-
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
 ```{r}
-str(Preprocessed_dataset)
+# Load the 'Pre-processed' data through readxl package:
+library(readxl)
+
+# Read the Excel file
+Preprocessed_dataset <- read_excel("preprocessed_dataset.xlsx")
 ```
 ```{r}
- # It's important to adjust column names appropriately
+Preprocessed_dataset$Delay_Severity<-as.factor(Preprocessed_dataset$Delay_Severity)
+```
+```{r}
+ # Adjusting column names appropriately
 colnames(Preprocessed_dataset) <- c("Delay_Severity", "Route", "Day", "Incident", "Direction","Vehicle","Time_Period")
 ```
 ```{r}
 str(Preprocessed_dataset)
 ```
-```{r}
-install.packages("shiny")
-```
 
 ```{r}
-library(shiny)
-
-# Assuming 'Preprocessed_dataset' is your preprocessed dataset
-# Replace 'Preprocessed_dataset' with the name of your dataset
-dataset <- Preprocessed_dataset
-
-# UI for downloading the dataset
-ui <- fluidPage(
-  downloadButton("downloadData", "Download Preprocessed Dataset")
-)
-
-# Server function
-server <- function(input, output) {
-  output$downloadData <- downloadHandler(
-    filename = function() {
-      "preprocessed_dataset.csv"  # Change the filename as needed
-    },
-    content = function(file) {
-      write.csv(dataset, file, row.names = FALSE)
-    }
-  )
-}
-
-# Run the Shiny application
-shinyApp(ui, server)
-
-
-```
-
-
-```{r}
-install.packages("randomForest")
+# Load required packages:
 library(randomForest)
 library(caret)
 library(class)
 ```
+
+#EXPERIMENTAL DESIGN: TRAIN:TEST SPLIT:
 ```{r}
 set.seed(123) # Set a random seed for reproducibility
 
-# Create indices for the training set
-trainIndex <- createDataPartition(Preprocessed_dataset$Delay_Severity, p = .8, 
+# Create indices for the training set (85% of the dataset)
+trainIndex <- createDataPartition(Preprocessed_dataset$Delay_Severity, p = .85, 
                                   list = FALSE, 
                                   times = 1)
 
@@ -84,6 +59,19 @@ test <- Preprocessed_dataset[-trainIndex, ]
 
 ```
 
+# MACHINE LEARNING CLASSIFICATION MODELS TO BE TESTED
+```{r}
+# We'll train-test 4 separate classification algorithms - Random Forest (RF), Logistic Regression (LR), K Nearest Neighbours (KNN) and Gradient Boosted Machine (GBM) and evaluate models using metrics like confusion matrix, accuracy, recall (sensitivity), precision (specificity) .
+
+# All classification models will make "TTC Delay prediction" in 3 class (Delay Severity) - 1. Borderline Late (<10Min); 2. Considerably Late (10-15Min) and Extremely Late (>15Min)
+
+# To ensure accuracy and reliability, 10 fold cross validation will be conducted for each models
+
+# Based on the outcome, final model will be selected. Based on the final model selection, we'll try to improve the model through Oversampling/ other means
+```
+
+
+# ALGORITHM 1: RANDOM FOREST:
 ```{r}
 # Train the Random Forest model
 rf_model <- randomForest(Delay_Severity ~ ., data = train, ntree = 100)
@@ -102,8 +90,20 @@ conf_matrix <- confusionMatrix(predictions, test$Delay_Severity)
 # Print the confusion matrix
 print(conf_matrix)
 ```
+```{r}
+#Overall Accuracy:The Random Forest model achieves an accuracy of 66.04% [cross validation ~65.86%], indicating its ability to predict outcomes correctly across the dataset.
+
+#Class-Specific Performance:Sensitivity values range from 58.68% to 76.60%, showing the model's ability to identify instances of different classes.Specificity values range from 79.33% to 88.47%, indicating the model's ability to correctly identify negative instances across classes.
+
+#Predictive Values:Positive predictive values (PPV) range from 64.20% to 69.69%, indicating the proportion of correct positive predictions out of all positive predictions made by the model.
+
+#Negative predictive values (NPV) range from 79.85% to 87.01%, indicating the proportion of correct negative predictions out of all negative predictions made by the model.
+
+#Balanced Accuracy:The balanced accuracy ranges from 71.75% to 77.96% across different classes, providing an overall measure of the model's performance that considers both sensitivity and specificity.
+```
 
 
+#10 FOLD CROSS-VALIDATION FOR RANDOM FOREST ALGORITHM:
 ```{r}
 library(caret)
 
@@ -136,15 +136,25 @@ for (i in 1:length(folds)) {
 print(accuracies)
 
 ```
+```{r}
+# Cross-validation output for Random Forest dataset
+RF_cv_output <- c(0.656, 0.662, 0.654, 0.659, 0.655, 0.658, 0.666, 0.660, 0.655, 0.661)
+
+# Compute the mean of the cross-validation output
+mean_RF_cv_output <- mean(RF_cv_output)
+
+# Print the mean
+print(mean_RF_cv_output)
+
+```
 
 
 ```{r}
-install.packages("nnet")
 library(caret)
 library(nnet)
 ```
 
-
+#ALGORITHM 2: MULTINOMIAL LOGISTIC REGRESSION:
 ```{r}
 # Train the multinomial logistic regression model
 multinom_model <- multinom(Delay_Severity ~ ., data = train)
@@ -157,6 +167,21 @@ conf_matrix <- confusionMatrix(test$predicted_severity, test$Delay_Severity)
 # Print the confusion matrix
 print(conf_matrix)
 ```
+```{r}
+# Model Comparison LR Vs RF:
+
+#Overall Accuracy:LR: Achieves an accuracy of 37.5%; RF: Outperforms LR with an accuracy of 66.04%.
+
+#Sensitivity and Specificity:LR>Sensitivity ranges from 6.38% to 59.00% and Specificity ranges from 52.22% to 95.60% across different classes.RF>Sensitivity ranges from 58.68% to 76.60% and Specificity ranges from 79.33% to 88.47% across different classes.
+
+#Balanced Accuracy:LR> Balanced accuracy ranges from 50.97% to 55.61% across different classes; RF>Balanced accuracy ranges from 73.57% to 77.96% across different classes.
+
+#In summary, Random Forest significantly outperforms Logistic Regression across all metrics, including overall accuracy, sensitivity, specificity and balanced accuracy.
+```
+
+
+
+#10 FOLD CROSS VALIDATION FOR MULTINOMIAL LOGISTIC REGRESSION
 ```{r}
 library(caret)
 library(nnet) # For multinom model
@@ -194,6 +219,16 @@ print(accuracies)
 
 ```
 
+```{r}
+# Cross-validation output for Logistic Regression dataset
+LR_cv_output <- c(0.377, 0.379, 0.373, 0.379, 0.378, 0.380, 0.381, 0.382, 0.373, 0.380)
+
+# Compute the mean of the cross-validation output
+mean_LR_cv_output <- mean(LR_cv_output)
+
+# Print the mean
+print(mean_LR_cv_output)
+```
 
 
 ```{r}
@@ -205,20 +240,16 @@ Preprocessed_dataset <- Preprocessed_dataset[, !is.na(names(Preprocessed_dataset
 # Splitting the dataset again after excluding NA named columns
 set.seed(123) # Ensuring reproducibility
 
-trainIndex <- createDataPartition(Preprocessed_dataset$Incident, p = .8, 
+trainIndex <- createDataPartition(Preprocessed_dataset$Incident, p = .85, 
                                   list = FALSE, times = 1)
 
 train <- Preprocessed_dataset[trainIndex, ]
 test <- Preprocessed_dataset[-trainIndex, ]
 
 ```
+
+# ALGORITHM 3: APPLYING KNN ALGORITHM ON TTC DELAY DATASET:
 ```{r}
-
-```
-
-```{r}
-
-
 # Apply KNN
 knn_pred <- knn(train = train[, -1], # Exclude the dependent variable from training data
                 test = test[, -1],   # Exclude the dependent variable from testing data
@@ -230,32 +261,64 @@ confusionMatrix <- table(Actual = test$Delay_Severity, Predicted = knn_pred)
 print(confusionMatrix)
 
 ```
+# CALCULATING ACCURACY, PRECISION AND RECALL FOR KNN ALGORITHM:
 ```{r}
-library(caret)
-library(class)
+# Given confusion matrix values
+confusionMatrix <- matrix(c(3302, 2086, 1665,
+                            1835, 4083, 2086,
+                            1367, 1981, 4204),
+                          nrow = 3, byrow = TRUE,
+                          dimnames = list(Actual = c("Borderline Late (<10 Min)", "Considerably Late (11-15 Min)", "Extremely Late (>15 Min)"),
+                                          Predicted = c("Borderline Late (<10 Min)", "Considerably Late (11-15 Min)", "Extremely Late (>15 Min)")))
 
-# Excluding columns with NA names
-Preprocessed_dataset <- Preprocessed_dataset[, !is.na(names(Preprocessed_dataset))]
+# Calculate sensitivity (recall) for each class
+sensitivity_A <- confusionMatrix[1,1] / sum(confusionMatrix[1,])
+sensitivity_B <- confusionMatrix[2,2] / sum(confusionMatrix[2,])
+sensitivity_C <- confusionMatrix[3,3] / sum(confusionMatrix[3,])
 
-# Splitting the dataset again after excluding NA named columns
-set.seed(123) # Ensuring reproducibility
-trainIndex <- createDataPartition(Preprocessed_dataset$Incident, p = .8, 
-                                  list = FALSE, times = 1)
+# Calculate specificity for each class
+total = sum(confusionMatrix)
+true_negatives_A <- total - sum(confusionMatrix[1,]) - sum(confusionMatrix[,1]) + confusionMatrix[1,1]
+specificity_A <- true_negatives_A / (total - sum(confusionMatrix[1,]))
 
-train <- Preprocessed_dataset[trainIndex, ]
-test <- Preprocessed_dataset[-trainIndex, ]
+true_negatives_B <- total - sum(confusionMatrix[2,]) - sum(confusionMatrix[,2]) + confusionMatrix[2,2]
+specificity_B <- true_negatives_B / (total - sum(confusionMatrix[2,]))
 
-# Apply KNN
-knn_pred <- knn(train = train[, -1],     # Exclude the dependent variable from training data
-                test = test[, -1],       # Exclude the dependent variable from testing data
-                cl = train$Delay_Severity, # Training labels
-                k = 10)                  # Number of neighbors
+true_negatives_C <- total - sum(confusionMatrix[3,]) - sum(confusionMatrix[,3]) + confusionMatrix[3,3]
+specificity_C <- true_negatives_C / (total - sum(confusionMatrix[3,]))
 
-# View the confusion matrix
-confusionMatrix <- table(Actual = test$Delay_Severity, Predicted = knn_pred)
-print(confusionMatrix)
+# Calculate overall accuracy
+accuracy <- sum(diag(confusionMatrix)) / sum(confusionMatrix)
+
+# Print the results
+print(paste("Sensitivity for Borderline Late (<10 Min):", sensitivity_A))
+print(paste("Sensitivity for Considerably Late (11-15 Min):", sensitivity_B))
+print(paste("Sensitivity for Extremely Late (>15 Min):", sensitivity_C))
+print(paste("Specificity for Borderline Late (<10 Min):", specificity_A))
+print(paste("Specificity for Considerably Late (11-15 Min):", specificity_B))
+print(paste("Specificity for Extremely Late (>15 Min):", specificity_C))
+print(paste("Overall Accuracy:", accuracy))
 
 ```
+```{r}
+#KNN Output Comparison with Random Forest:
+
+#Overall Accuracy: Random Forest achieved an overall accuracy of 66.04%, significantly outperforming KNN with an accuracy of 51.26%.
+
+#Sensitivity and Specificity:Across all classes, Random Forest exhibits higher sensitivity and specificity compared to KNN. For example:
+#For Borderline Late (<10 Min):Random Forest Sensitivity: 58.68% vs. KNN Sensitivity: 46.82%.Random Forest Specificity: 88.47% vs. KNN Specificity: 79.42%
+
+#For Considerably Late (11-15 Min):Random Forest Sensitivity: 62.48% vs. KNN Sensitivity: 51.01%. Random Forest Specificity: 81.01% vs. KNN Specificity: 72.15%
+
+#For Extremely Late (>15 Min):Random Forest Sensitivity: 76.60% vs. KNN Sensitivity: 55.67%. Random Forest Specificity: 79.33% vs. KNN Specificity: 75.09%
+
+#Predictive Values:Random Forest also demonstrates higher positive predictive values (PPV) and negative predictive values (NPV) compared to KNN across all classes.
+
+#Balanced Accuracy:Balanced accuracy values are generally higher for Random Forest across all classes compared to KNN. For example, Random Forest achieves a balanced accuracy of 73.57% for Borderline Late (<10 Min) compared to KNN's 71.75%.
+```
+
+
+# 10 FOLD CROSS VALIDATION FOR KNN ALGORITHM:
 ```{r}
 library(caret)
 library(class)
@@ -296,9 +359,20 @@ for (i in seq_along(folds)) {
 print(accuracies)
 
 ```
+```{r}
+# Cross-validation output for KNN Algorithm dataset
+KNN_cv_output <- c(0.507, 0.509, 0.513, 0.509, 0.504, 0.510, 0.513, 0.506, 0.514, 0.512)
+
+# Compute the mean of the cross-validation output
+mean_KNN_cv_output <- mean(KNN_cv_output)
+
+# Print the mean
+print(mean_KNN_cv_output)
+```
+
+
 
 ```{r}
-install.packages("gbm")
 library(gbm)
 library(caret)
 ```
@@ -328,17 +402,30 @@ predictions <- predict(gbm_model, newdata = test, n.trees = 100, type = "respons
 max_probs <- apply(predictions, 1, which.max)
 predicted_labels <- factor(max_probs, labels = levels(train$Delay_Severity))
 
-```
-
-
-```{r}
 # Generate the confusion matrix
 conf_matrix <- confusionMatrix(predicted_labels, test$Delay_Severity)
 
 # Print the confusion matrix and statistics
 print(conf_matrix)
-
 ```
+
+```{r}
+#Comparison- GBM Vs RF:
+
+#Overall Accuracy: Random Forest achieves an accuracy of 66.04%, outperforming GBM's accuracy of 60.84%.
+
+#Sensitivity and Specificity:Sensitivity values for Random Forest range from 58.68% to 76.60% across different classes, while GBM's sensitivity ranges from 47.45% to 72.07%.Specificity values for Random Forest range from 74.19% to 88.99%, whereas GBM's specificity ranges from 74.19% to 88.99%.
+
+#Positive Predictive Values (PPV):Random Forest's PPV ranges from 64.20% to 69.69%, and GBM's PPV ranges from 56.85% to 66.16%.
+#Negative Predictive Values (NPV):Random Forest's NPV ranges from 79.85% to 87.01%, and GBM's NPV ranges from 78.10% to 84.71%.
+
+#Balanced Accuracy:Random Forest achieves balanced accuracy values ranging from 73.57% to 77.96% across different classes, while GBM's balanced accuracy ranges from 68.12% to 74.84%.
+
+#In summary, Random Forest generally outperforms GBM in terms of overall accuracy, sensitivity, PPV, NPV, and balanced accuracy across different classes. However, GBM demonstrates comparable specificity values to Random Forest.
+```
+
+
+# 10 FOLD CROSS-VALIDATION FOR GBM ALGORITHM
 ```{r}
 library(caret)
 library(gbm)
@@ -389,115 +476,53 @@ print(accuracies)
 
 ```
 
-#Cross-Validation
 ```{r}
-install.packages("DMwR2")
+# Cross-validation output for GBM Algorithm dataset
+GBM_cv_output <- c(0.600, 0.607, 0.610, 0.606, 0.605, 0.603, 0.614, 0.609, 0.609, 0.604)
+
+# Compute the mean of the cross-validation output
+mean_GBM_cv_output <- mean(GBM_cv_output)
+
+# Print the mean
+print(mean_GBM_cv_output)
+```
+#MODEL SELECTION:
+```{r}
+# Based on the comparative analysis, Random Forest Classification model was the clear winner across Accuracy, Specificity and Sensitivity parameters Vs the other 3 models in terms of making more accurate TTC delay predictions (Delay Seerity) for all 3 classes.
+
+#In summary, Random Forest classification model was a better fit classification model over GBM, LR, and KNN as the TTC delay data had high-dimensional data, presence of some irrelevant features, large datasets, nonlinear relationships and robustness to overfitting. 
 ```
 
 
-```{r message=TRUE}
-# Apply SMOTE to balance the training data
-train_balanced <- SMOTE(X=train[, -1], target=train$Delay_Severity, K = 5, dup_size = 102)
-```
-
+# OVERSAMPLING DATASET TO CHECK ON MODEL IMPROVEMENT
 ```{r}
-install.packages("smotefamily")
-```
+library(shiny)
 
+# Assuming 'Preprocessed_dataset' is your preprocessed dataset
+# Replace 'Preprocessed_dataset' with the name of your dataset
+dataset <- train
 
-```{r}
-library(caret)
-folds<-createFolds(train$Delay_Severity,k=10)
-cv=lapply(folds,function(x){
-  training_fold=train[-x, ]
-  test_fold=train[x, ]
-  # Train the Random Forest model
-  rf_model <- randomForest(Delay_Severity ~ ., data = training_fold, ntree = 300)
+# UI for downloading the dataset
+ui <- fluidPage(
+  downloadButton("downloadData", "Download Preprocessed Dataset")
+)
 
-# Print the model summary
-  print(rf_model)
-# Predict on the test set
-  predictions <- predict(rf_model, newdata = test_fold)
-
-# Generate the confusion matrix
-  conf_matrix <- confusionMatrix(predictions, test_fold$Delay_Severity)
-  accuracy <- (conf_matrix[[1, 1]] + conf_matrix[[2, 2]] + conf_matrix[[3, 3]]) /
-            sum(conf_matrix)
-  return(accuracy)
-  })
-
-```
-
-
-```{r}
-library(caret)
-
-folds <- createFolds(train$Delay_Severity, k = 10)
-cv <- lapply(folds, function(x) {
-  training_fold <- train[-x, ]
-  test_fold <- train[x, ]
-
-  # Train the Random Forest model
-  rf_model <- randomForest(Delay_Severity ~ ., data = training_fold, ntree = 300)
-
-  # Predict on the test set
-  predictions <- predict(rf_model, newdata = test_fold)
-
-  # Generate the confusion matrix
-  conf_matrix <- confusionMatrix(predictions, test_fold$Delay_Severity)
-
-  # Calculate accuracy
-  accuracy <- confusionMatrix(predictions, test_fold$Delay_Severity)$overall['Accuracy']
-  return(accuracy)
-})
-
-```
-
-
-```{r}
-library(caret)
-library(e1071)  # For SVM implementation
-
-# Set seed for reproducibility
-set.seed(123)
-
-# Create 10-fold cross-validation folds
-folds <- createFolds(Preprocessed_dataset$Delay_Severity, k = 10)
-
-# Initialize an empty vector to store accuracies
-accuracies <- numeric(length(folds))
-
-# Perform 10-fold cross-validation
-for (i in seq_along(folds)) {
-  # Extract training and test data for current fold
-  train_fold <- Preprocessed_dataset[-folds[[i]], ]
-  test_fold <- Preprocessed_dataset[folds[[i]], ]
-  
-  # Train the SVM model
-  svm_model <- svm(Delay_Severity ~ ., 
-                   data = train_fold, 
-                   kernel = "radial",  # Radial basis function kernel
-                   gamma = 0.1,        # Kernel coefficient for radial kernel
-                   cost = 1)           # Cost parameter
-  
-  # Predict on the test set
-  predictions <- predict(svm_model, newdata = test_fold)
-  
-  # Calculate accuracy
-  accuracy <- mean(predictions == test_fold$Delay_Severity)
-  
-  # Store accuracy of the current fold
-  accuracies[i] <- accuracy
-  
-  # Print accuracy of the current fold
-  cat("Accuracy of Fold", i, ":", accuracy, "\n")
+# Server function
+server <- function(input, output) {
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      "train.csv"  # Change the filename as needed
+    },
+    content = function(file) {
+      write.csv(dataset, file, row.names = FALSE)
+    }
+  )
 }
 
-# Print accuracies of each fold
-print(accuracies)
+# Run the Shiny application
+shinyApp(ui, server)
 
 ```
-
 
 #RELOAD OVERSAMPLED BALANCED DATASET
 ```{r}
@@ -505,102 +530,50 @@ print(accuracies)
 library(readxl)
 
 # Read the Excel file
-Oversampled_Dataset <- read_excel("TTC_preprocessed_dataset.xlsx")
-
+Oversampled_Dataset <- read_excel("train_Oversampling.xlsx")
+Oversampled_Dataset$Delay_Severity <- as.factor(Oversampled_Dataset$Delay_Severity)
 # View the data (optional)
-head(Oversampled_Dataset)
+str(Oversampled_Dataset)
+```
+```{r}
+# Identifying Presence of Missing Data
+missing_values1 <- colSums(is.na(Oversampled_Dataset))
+
+# Print the count of missing values for each column
+print(missing_values1)
 ```
 
-
+# CHECK RANDOM FOREST MODEL ACCURACY IMPROVEMENT OPPORTUNITY THROUGH OVERSAMPLING:
 ```{r}
-set.seed(123) # Set a random seed for reproducibility
-
-# Create indices for the training set
-trainIndex1 <- createDataPartition(Oversampled_Dataset$Delay_Severity, p = .8, 
-                                  list = FALSE, 
-                                  times = 1)
 
 # Split the data into training and testing sets
-train1 <- Preprocessed_dataset[trainIndex1, ]
-test1 <- Preprocessed_dataset[-trainIndex1, ]
+train1 <- Oversampled_Dataset
+test1 <- test
 ```
-
-
 ```{r}
+library(randomForest)
+library(caret)
+# Train the Random Forest model
+rf_model1 <- randomForest(Delay_Severity ~ ., data = train1, ntree = 100)
+
+# Print the model summary
+print(rf_model1)
+# Predict on the test set
+predictions1 <- predict(rf_model1, newdata = test1)
+
+# Assuming caret package is installed for confusionMatrix
 library(caret)
 
-# Create 10-fold cross-validation folds
-folds1 <- createFolds(train1$Delay_Severity, k = 10)
+# Generate the confusion matrix
+conf_matrix1 <- confusionMatrix(predictions1, test1$Delay_Severity)
 
-# Initialize an empty vector to store accuracies
-accuracies1 <- numeric(length(folds1))
-
-# Perform 10-fold cross-validation
-for (i in 1:length(folds1)) {
-  # Extract training and test data for current fold
-  training_fold1 <- train1[-folds1[[i]], ]
-  test_fold1 <- train1[folds1[[i]], ]
-  
-  # Train the Random Forest model
-  rf_model1 <- randomForest(Delay_Severity ~ ., data = training_fold1, ntree = 100)
-  
-  # Predict on the test set
-  predictions1 <- predict(rf_model1, newdata = test_fold1)
-  
-  # Generate the confusion matrix
-  conf_matrix1 <- confusionMatrix(predictions1, test_fold1$Delay_Severity)
-  
-  # Calculate accuracy and store it
-  accuracies1[i] <- conf_matrix1$overall['Accuracy']
-}
-
-# Print accuracies of each fold
-print(accuracies1)
-
+# Print the confusion matrix
+print(conf_matrix1)
 ```
-
-
 ```{r}
-# Install and load missForest package
-install.packages("missForest")
-library(missForest)
-
-# Impute missing values using missForest
-imputed_data <- missForest(train1)
-
-# Create 10-fold cross-validation folds
-folds1 <- createFolds(imputed_data$Delay_Severity, k = 10)
-
-# Initialize an empty vector to store accuracies
-accuracies1 <- numeric(length(folds1))
-
-# Perform 10-fold cross-validation
-for (i in 1:length(folds1)) {
-  # Extract training and test data for current fold
-  training_fold1 <- imputed_data[-folds1[[i]], ]
-  test_fold1 <- imputed_data[folds1[[i]], ]
-  
-  # Train the Random Forest model
-  rf_model1 <- randomForest(Delay_Severity ~ ., data = training_fold1, ntree = 100)
-  
-  # Predict on the test set
-  predictions1 <- predict(rf_model1, newdata = test_fold1)
-  
-  # Generate the confusion matrix
-  conf_matrix1 <- confusionMatrix(predictions1, test_fold1$Delay_Severity)
-  
-  # Calculate accuracy and store it
-  accuracies1[i] <- conf_matrix1$overall['Accuracy']
-}
-
-# Print accuracies of each fold
-print(accuracies1)
-
+#The overall accuracy slightly improved after oversampling 'Borderline Late' data
 ```
 
 
-```{r}
-str(Preprocessed_dataset)
 
-```
 

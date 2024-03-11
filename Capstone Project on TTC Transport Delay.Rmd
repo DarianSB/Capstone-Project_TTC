@@ -1,8 +1,8 @@
 ---
 title: "CAPSTONE Project _TTC DELAY ANALYSIS AND PREDICTION"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 date: "2024-02-17"
 ---
 
@@ -24,7 +24,7 @@ library(readxl)
 
 # Read the Excel file
 data2 <- read_excel("ttc-bus-delay-data-2021-23.xlsx")
-
+head(data2)
 ```
 
 ```{r}
@@ -513,10 +513,35 @@ correlation_matrix <- cor(numeric_data)
 ggcorrplot(correlation_matrix, hc.order = TRUE, type = "lower", lab = TRUE)
 ```
 
+#APPLYING MULTIPLE LINEAR REGRESSION TO UNDERSTAND PREDICTIVE POWER OF KEY VARIABLES:
 ```{r}
 summary(lm (Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2 ))
 ```
 
+#FORWARD SELECTION
+```{r}
+library(MASS) # stepwise regression
+library(leaps) # all subsets regression
+full <- lm(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2)
+null <- lm(Min_Delay_Winsorized~1,data=data2_filled_updated2)
+stepF <- stepAIC(null, scope=list(lower=null, upper=full),
+direction= "forward", trace=TRUE)
+summary(stepF)
+```
+
+# BACKWARD ELIMINATION
+```{r}
+full <- lm(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2)
+stepB <- stepAIC(full, direction= "backward", trace=TRUE)
+summary(stepB)
+```
+
+#UNDERSTAND BEST COMBINATION OF ATTRIBUTES
+```{r}
+subsets<-regsubsets(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2, nbest=1)
+sub.sum <- summary(subsets)
+as.data.frame(sub.sum$outmat)
+```
 
 ```{r}
 Cleaned_Data<-data2_filled_updated2
@@ -526,7 +551,7 @@ Cleaned_Data$Day<- as.numeric(Cleaned_Data$Day)
 str(Cleaned_Data)
 ```
 
-
+#DATA NORMALIZATION BEFORE APPLYING PREDICTIVE MODELING
 ```{r}
 library(class)
 library(gmodels)
