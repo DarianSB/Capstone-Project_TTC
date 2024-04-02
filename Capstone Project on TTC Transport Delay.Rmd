@@ -364,6 +364,20 @@ ggplot(data_by_month, aes(x = Month, y = Avg_Min_Delay)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
 
 ```
+```{r}
+data2_filled_updated3<-data2_filled_updated2 %>%
+  group_by(Month_Name) %>%
+  summarise(Avg_Delay=mean(Min_Delay_Winsorized)) %>%
+  arrange(desc(Avg_Delay))
+ggplot(data2_filled_updated3,aes(x=Month_Name,y=Avg_Delay)) +
+  geom_bar(stat = "identity",fill="orange") +
+  geom_text(aes(label=round(Avg_Delay,2)),vjust=-0.5,color="black",size=3) +
+  labs(title=" Avg. Delay By Month",x="Month",y="Avg. Delay") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45,hjust = 1))
+```
+
+
 # AVERAGE DELAY BY INCIDENT:
 ```{r}
 library(dplyr)
@@ -389,6 +403,26 @@ ggplot(data_by_incident, aes(x = Incident, y = Avg_Min_Delay)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for better readability
 ```
+
+```{r}
+data2_filled_updated3<-data2_filled_updated2 %>%
+  group_by(Incident) %>%
+  summarize(Avg_Delay=mean(Min_Delay_Winsorized)) %>%
+  arrange(desc(Avg_Delay)) %>%
+  mutate(Incident = factor(Incident, levels = Incident))
+
+
+
+ggplot(data2_filled_updated3,aes(x=Incident,y=Avg_Delay)) +
+  geom_bar(stat = "identity",fill="lightblue") +
+  geom_text(aes(label=round(Avg_Delay,2)),vjust=0.0,color="black",size=4) +
+  labs(title = "Avg. Delay By incident",x="Incident",y="Avg. Delay") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle=45,hjust = 1))
+
+```
+
+
 # AVERAGE DELAY BY DAY
 ```{r}
 # Aggregate data by day and calculate the mean Min Delay for each day
@@ -512,6 +546,11 @@ correlation_matrix <- cor(numeric_data)
 # Plot the correlation matrix using ggcorrplot
 ggcorrplot(correlation_matrix, hc.order = TRUE, type = "lower", lab = TRUE)
 ```
+```{r}
+#Presence of complex and non-linear relationships among the dependent variable and independent variables; the relationship cannot be adequately captured or described by simple linear relationships.
+# As 'Min_Gap'; 'Min_Delay' and 'Delay_Severity' are pretty similar variables generated from one another; they show strong correlations
+```
+
 
 #APPLYING MULTIPLE LINEAR REGRESSION TO UNDERSTAND PREDICTIVE POWER OF KEY VARIABLES:
 ```{r}
@@ -522,7 +561,7 @@ summary(lm (Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direct
 ```{r}
 library(MASS) # stepwise regression
 library(leaps) # all subsets regression
-full <- lm(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2)
+full <- lm(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction + Vehicle , data = data2_filled_updated2)
 null <- lm(Min_Delay_Winsorized~1,data=data2_filled_updated2)
 stepF <- stepAIC(null, scope=list(lower=null, upper=full),
 direction= "forward", trace=TRUE)
@@ -531,17 +570,24 @@ summary(stepF)
 
 # BACKWARD ELIMINATION
 ```{r}
-full <- lm(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2)
+full <- lm(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction + Vehicle , data = data2_filled_updated2)
 stepB <- stepAIC(full, direction= "backward", trace=TRUE)
 summary(stepB)
 ```
 
 #UNDERSTAND BEST COMBINATION OF ATTRIBUTES
 ```{r}
-subsets<-regsubsets(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction , data = data2_filled_updated2, nbest=1)
+subsets<-regsubsets(Min_Delay_Winsorized ~ Incident + Time_Period + Route + Day + Direction + Vehicle , data = data2_filled_updated2, nbest=1)
 sub.sum <- summary(subsets)
 as.data.frame(sub.sum$outmat)
 ```
+
+```{r}
+#Outcome of Forward Selection and Backward Elimination exercise on TTC Delay data:
+# All 6 features have some predictive power in varying lengths [AIC increase/decrease]
+# Based on the output, we'll select 6 variables for predictive classification models which are: Incident, Route, Time Period, Day, Direction, Vehicle
+```
+
 
 ```{r}
 Cleaned_Data<-data2_filled_updated2
@@ -574,8 +620,32 @@ Preprocessed_dataset<-cbind(Cleaned_Data$Delay_Severity,normalized)
 str(Preprocessed_dataset)
 ```
 
-
+#DOWNLOAD 'PREPROCESSED DATASET' TO BE USED SEPARATELY FOR MACHINE LEARNING MODELS
 ```{r}
+library(shiny)
 
+# Assuming 'Preprocessed_dataset' is your preprocessed dataset
+# Replace 'Preprocessed_dataset' with the name of your dataset
+dataset <- Preprocessed_dataset
+
+# UI for downloading the dataset
+ui <- fluidPage(
+  downloadButton("downloadData", "Download Preprocessed Dataset")
+)
+
+# Server function
+server <- function(input, output) {
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      "Preprocessed_dataset.csv"  # Change the filename as needed
+    },
+    content = function(file) {
+      write.csv(dataset, file, row.names = FALSE)
+    }
+  )
+}
+
+# Run the Shiny application
+shinyApp(ui, server)
 ```
 

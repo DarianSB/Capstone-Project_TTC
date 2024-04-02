@@ -37,6 +37,8 @@ colnames(Preprocessed_dataset) <- c("Delay_Severity", "Route", "Day", "Incident"
 str(Preprocessed_dataset)
 ```
 
+
+
 ```{r}
 # Load required packages:
 library(randomForest)
@@ -81,7 +83,7 @@ print(rf_model)
 # Predict on the test set
 predictions <- predict(rf_model, newdata = test)
 
-# Assuming caret package is installed for confusionMatrix
+# Caret package is installed for confusionMatrix
 library(caret)
 
 # Generate the confusion matrix
@@ -91,9 +93,9 @@ conf_matrix <- confusionMatrix(predictions, test$Delay_Severity)
 print(conf_matrix)
 ```
 ```{r}
-#Overall Accuracy:The Random Forest model achieves an accuracy of 66.04% [cross validation ~65.86%], indicating its ability to predict outcomes correctly across the dataset.
+#Overall Accuracy:The Random Forest model achieves an accuracy of 66.43% [cross validation ~65.62%], indicating its ability to predict outcomes correctly across the dataset.
 
-#Class-Specific Performance:Sensitivity values range from 58.68% to 76.60%, showing the model's ability to identify instances of different classes.Specificity values range from 79.33% to 88.47%, indicating the model's ability to correctly identify negative instances across classes.
+#Class-Specific Performance:Sensitivity values range from 59.54% to 76.81%, showing the model's ability to identify instances of different classes.Specificity values range from 80.31% to 85.31%, indicating the model's ability to correctly identify negative instances across classes.
 
 #Predictive Values:Positive predictive values (PPV) range from 64.20% to 69.69%, indicating the proportion of correct positive predictions out of all positive predictions made by the model.
 
@@ -138,7 +140,7 @@ print(accuracies)
 ```
 ```{r}
 # Cross-validation output for Random Forest dataset
-RF_cv_output <- c(0.656, 0.662, 0.654, 0.659, 0.655, 0.658, 0.666, 0.660, 0.655, 0.661)
+RF_cv_output <- c(0.656, 0.656, 0.659, 0.666, 0.652, 0.654, 0.656, 0.660, 0.653, 0.650)
 
 # Compute the mean of the cross-validation output
 mean_RF_cv_output <- mean(RF_cv_output)
@@ -221,7 +223,7 @@ print(accuracies)
 
 ```{r}
 # Cross-validation output for Logistic Regression dataset
-LR_cv_output <- c(0.377, 0.379, 0.373, 0.379, 0.378, 0.380, 0.381, 0.382, 0.373, 0.380)
+LR_cv_output <- c(0.373, 0.372, 0.380, 0.377, 0.378, 0.379, 0.372, 0.373, 0.385, 0.376)
 
 # Compute the mean of the cross-validation output
 mean_LR_cv_output <- mean(LR_cv_output)
@@ -264,9 +266,9 @@ print(confusionMatrix)
 # CALCULATING ACCURACY, PRECISION AND RECALL FOR KNN ALGORITHM:
 ```{r}
 # Given confusion matrix values
-confusionMatrix <- matrix(c(3302, 2086, 1665,
-                            1835, 4083, 2086,
-                            1367, 1981, 4204),
+confusionMatrix <- matrix(c(3566, 1892, 1638,
+                            1905, 3331, 1830,
+                            1467, 1788, 3693),
                           nrow = 3, byrow = TRUE,
                           dimnames = list(Actual = c("Borderline Late (<10 Min)", "Considerably Late (11-15 Min)", "Extremely Late (>15 Min)"),
                                           Predicted = c("Borderline Late (<10 Min)", "Considerably Late (11-15 Min)", "Extremely Late (>15 Min)")))
@@ -361,7 +363,7 @@ print(accuracies)
 ```
 ```{r}
 # Cross-validation output for KNN Algorithm dataset
-KNN_cv_output <- c(0.507, 0.509, 0.513, 0.509, 0.504, 0.510, 0.513, 0.506, 0.514, 0.512)
+KNN_cv_output <- c(0.506, 0.504, 0.501, 0.506, 0.504, 0.509, 0.503, 0.507, 0.503, 0.505)
 
 # Compute the mean of the cross-validation output
 mean_KNN_cv_output <- mean(KNN_cv_output)
@@ -478,7 +480,7 @@ print(accuracies)
 
 ```{r}
 # Cross-validation output for GBM Algorithm dataset
-GBM_cv_output <- c(0.600, 0.607, 0.610, 0.606, 0.605, 0.603, 0.614, 0.609, 0.609, 0.604)
+GBM_cv_output <- c(0.610, 0.602, 0.602, 0.609, 0.611, 0.610, 0.602, 0.614, 0.608, 0.610)
 
 # Compute the mean of the cross-validation output
 mean_GBM_cv_output <- mean(GBM_cv_output)
@@ -494,85 +496,8 @@ print(mean_GBM_cv_output)
 ```
 
 
-# OVERSAMPLING DATASET TO CHECK ON MODEL IMPROVEMENT
-```{r}
-library(shiny)
 
-# Assuming 'Preprocessed_dataset' is your preprocessed dataset
-# Replace 'Preprocessed_dataset' with the name of your dataset
-dataset <- train
 
-# UI for downloading the dataset
-ui <- fluidPage(
-  downloadButton("downloadData", "Download Preprocessed Dataset")
-)
-
-# Server function
-server <- function(input, output) {
-  output$downloadData <- downloadHandler(
-    filename = function() {
-      "train.csv"  # Change the filename as needed
-    },
-    content = function(file) {
-      write.csv(dataset, file, row.names = FALSE)
-    }
-  )
-}
-
-# Run the Shiny application
-shinyApp(ui, server)
-
-```
-
-#RELOAD OVERSAMPLED BALANCED DATASET
-```{r}
-# Load the TTC Delay data readxl package:
-library(readxl)
-
-# Read the Excel file
-Oversampled_Dataset <- read_excel("train_Oversampling.xlsx")
-Oversampled_Dataset$Delay_Severity <- as.factor(Oversampled_Dataset$Delay_Severity)
-# View the data (optional)
-str(Oversampled_Dataset)
-```
-```{r}
-# Identifying Presence of Missing Data
-missing_values1 <- colSums(is.na(Oversampled_Dataset))
-
-# Print the count of missing values for each column
-print(missing_values1)
-```
-
-# CHECK RANDOM FOREST MODEL ACCURACY IMPROVEMENT OPPORTUNITY THROUGH OVERSAMPLING:
-```{r}
-
-# Split the data into training and testing sets
-train1 <- Oversampled_Dataset
-test1 <- test
-```
-```{r}
-library(randomForest)
-library(caret)
-# Train the Random Forest model
-rf_model1 <- randomForest(Delay_Severity ~ ., data = train1, ntree = 100)
-
-# Print the model summary
-print(rf_model1)
-# Predict on the test set
-predictions1 <- predict(rf_model1, newdata = test1)
-
-# Assuming caret package is installed for confusionMatrix
-library(caret)
-
-# Generate the confusion matrix
-conf_matrix1 <- confusionMatrix(predictions1, test1$Delay_Severity)
-
-# Print the confusion matrix
-print(conf_matrix1)
-```
-```{r}
-#The overall accuracy slightly improved after oversampling 'Borderline Late' data
-```
 
 
 
