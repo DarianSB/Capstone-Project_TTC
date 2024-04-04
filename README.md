@@ -78,3 +78,135 @@ In sum, this project enhances Toronto's public transit reliability by using data
 <img width="468" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/17a93255-4d37-4912-91c4-62399f90eaed">
 
 <img width="468" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/45ff13b1-e436-4afc-8010-f986dd8253bc">
+
+** Exploratory Data Analysis **
+Table 1: Snapshot of Raw Data in the RStudio
+<img width="467" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/d6eb29db-430d-4edd-9cb5-1025163ffe96">
+  
+Table 2: Structure of Bus Delay Data
+<img width="453" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/c16f03b7-a586-4182-9f15-a931979b0c25">
+
+Table 3: Metadata of Bus Delay Data
+<img width="341" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/3e0837f8-d94c-4462-a481-fc16e6bc96e9">
+
+Table 4: Summary of Bus Delay Data
+<img width="460" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/0bcc168d-199a-467f-b53a-e471e61a9c06">
+
+** 3.2 Data Cleaning and Pre-processing:**
+3.2.1 Assigning correct data types:
+<img width="460" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/cf26b8b4-dfbc-475d-91ac-9a8801ede256">
+
+3.2.2 Handling Missing Data:
+Table 6: Handling Missing Values of Bus Delay Data:
+<img width="457" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/b377be84-b802-450c-93e2-7cf6393377ac">
+<img width="457" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/8cc5e260-be5b-4b05-a88a-07fe6ebc2805">
+<img width="454" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/aec6395f-7419-44a2-a58e-80a25c7b3885">
+
+3.2.3 Identifying and defining dependent/ target variable:
+Figure 2: Boxplot of Min Delay by Incident Type:
+<img width="461" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/8de19a97-4825-457d-9419-5725a129084c">
+
+Table 7: Grouping “Min Delay” by Incident Type:
+<img width="439" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/af9e4ab2-7345-4369-827b-1f4c9ae44be0">
+<img width="439" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/9443ddef-0ae0-47df-b49b-037106470e22">
+
+3.2.6 Analyzing Data Imbalance:	
+Figure 4: Distribution of ‘Delay Severity’:
+<img width="468" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/5c5c43cd-62d4-428e-bb68-46e0586683bd">
+
+Table 8: By Incident Type Count of ‘Min Delay’ and Percentage of Total:
+<img width="467" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/565fce12-94ed-4d66-9a88-accbe32c4967">
+
+3.2.7 Categorical Variables with Excessive Levels:
+Figure 5: By Time Period Count of Grouped ‘Min Delay’:
+<img width="430" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/659bc721-5001-4797-b46c-fa145f42a512">
+
+Figure 6: Boxplot of Delay Distribution by Delay Severity:
+<img width="421" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/13e2579e-b768-4d6c-92aa-6e249f14f420">
+
+Figure 7: Bar Graph Visualization of By Incident Type Count of ‘Min Delay’:
+<img width="403" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/fd267457-d9ce-43fa-84b3-0d14f0523271">
+
+Figure 8: By Incident Type Count of Grouped ‘Min Delay’:
+<img width="416" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/51038706-af54-4382-8534-b74fa5fe4c59">
+<img width="453" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/426e663c-d579-4548-a9cf-ab073aee3056">
+
+4.1. Features Correlation Matrix:
+Figure 9: Feature Correlation Matrix
+<img width="398" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/3fef5598-3aa1-47dd-9619-079b26c3ec06">
+
+4.2. Bus Delay Analysis Across Different Time Periods:
+Figure 10: Delay Analysis by Month
+<img width="468" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/04c3f8a6-d323-4216-a8c3-0d8553b6c7c7">
+
+Figure 11: Average Delay Scenario by Day:
+<img width="468" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/2689553f-e445-4919-a563-515b78f28eb9">
+
+Figure 13: Boxplot of Delay Distribution by Time-period
+<img width="470" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/54282d5e-548b-4b71-8bbc-c496995b3712">
+
+Figure 14: Trend of Total Incidents Over last 3 Years
+<img width="445" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/f58bb1a8-eb5f-461d-8da3-63f556689445">
+
+4.3. Delay Analysis Based on Geographic Location and Incident Type:
+Figure 15: Top Routes with Highest Delay
+<img width="463" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/83721203-526c-4567-ab26-5560a74833dd">
+
+Figure 16: Top Locations with Highest Delay
+<img width="378" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/addcffc1-4e19-4eb4-b98e-e05f33ddee8c">
+
+<img width="464" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/d7fd92c6-4592-4c60-9233-b650f7e38af8">
+
+CHAPTER 5: ‘DIMENSIONALITY REDUCTION’ AND ‘DATA NORMALIZATION:
+
+5.1. Applying Linear Regression to Understand Significant Predictors:
+
+Figure 9: Identifying Significant Predictors through Linear Regression:
+<img width="257" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/e9ca9bff-c47b-49d9-b4d9-93a63139073a">
+
+5.2. Applying Dimensionality Reduction Techniques:
+Table 9: Outcome of Forward Selection: 
+<img width="436" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/cb4e56a2-d6f4-438f-b107-fce885823010">
+
+Table 10: Outcome of Backward Elimination: 
+<img width="470" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/b54ca2c6-7e69-4d98-b916-200bf1403a7f">
+
+5.3. Data Normalization for ML Modelling: 
+Table 11: Data Normalization Outcome:
+<img width="419" alt="image" src="https://github.com/DarianSB/Capstone-Project_TTC/assets/145614449/18d60c16-c97f-437a-b3de-b2fe80ba5217">
+
+** CHAPTER 6: MACHINE LEARNING MODELLING FOR BUS DELAY PREDICTION **
+This section introduces the building of bus  delay prediction models and their optimization. The machine learning model/ algorithms predicts the delay severity based on 3 prediction classes: 
+-	Borderline Late (<10 Min)
+-	Considerably Late (10-15 Min)
+-	Extremely Late (>15 Min)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
